@@ -1,10 +1,17 @@
-$(document).ready(function() {
+var curBackground = '';
+var curBackgroundUrl = '';
 
-	var windowWidth = $(window).width();
-	var windowHeight = $(window).height();
+var windowWidth = $(window).width();
+var windowHeight = $(window).height();
+var windowRatio = windowHeight/windowWidth;
+
+var screenshot = true;
+
+$(document).ready(function() {
 
 	var tipAdd = false;
 	var tipScreenshot = false;
+	var tipNoScreenshot = false;
 
 	$('#main').css('width', windowWidth);
 	$('#main').css('height', windowHeight);
@@ -18,14 +25,21 @@ $(document).ready(function() {
 	
 	var background = $("#background").val();
 	$('#main').html('<img id="backgroundImg" src="img/backgrounds/'+background+'.jpg" />');
-	//$('#main').css("background-image", "url('img/backgrounds/"+background+".jpg')");
-	//$('#main').css("background-size", "auto 100%");
-	//$('#main').css("background-repeat", "no-repeat");
 	$('#background').change(function() {
 		background = $(this).val();
-		$('#backgroundImg').attr('src', 'img/backgrounds/'+background+'.jpg');
-		//$('#main').css("background-image", "url('img/backgrounds/"+background+".jpg')");
+		if (background != 'custom') {
+			curBackground = background;
+			curBackgroundUrl = 'img/backgrounds/'+curBackground+'.jpg';
+			$('#backgroundImg').attr('src', curBackgroundUrl);
+			$('#screenshot img').css('opacity', '1.0');
+			$('#screenshot').css('cursor', 'pointer');
+			screenshot = true;
+		} else {
+			$('#addBackgroundModal').modal();
+		}
 	});
+	
+	
 	
 	$('#toolsHeader').click(function() {
 		$(this).popover('destroy');
@@ -33,7 +47,7 @@ $(document).ready(function() {
 		var tools = $('#tools').css('top');
 		if (tools == '0px') {
 			$('#tools').animate({ "top": "-70%" }, "slow", function() {
-				if (!tipScreenshot) {
+				if (!tipScreenshot && screenshot) {
 					$('#screenshot').popover({content: 'Click here to save your artwork to your gallery', placement: 'bottom'});
 					$('#screenshot').popover('show');
 					tipScreenshot = true;
@@ -56,9 +70,12 @@ $(document).ready(function() {
 		}
 	});
 	
-	$(document).click(function() {
-		if (tipAdd || tipScreenshot) {
+	$(document).mousedown(function() {
+		if (tipAdd) {
 			$('#tools').popover('destroy');
+		}
+		if ((tipScreenshot && tipNoScreenshot) || (tipScreenshot && screenshot) || (tipNoScreenshot)) {
+			console.log('here');
 			$('#screenshot').popover('destroy');
 		}
 	});
@@ -73,15 +90,12 @@ $(document).ready(function() {
 	$('#animalsWrapper2').droppable({drop: function(event, ui) {
 		$(this).append($(ui.draggable));
 		$(ui.draggable).removeAttr('style');
-	}});
+	}, tolerance: "pointer"});
 	
 	$("#animals img").click(function () {
 	
 		$('#main').append($(this));
-		//$(this).css('position', 'absolute');
 		$(this).css('z-index', '100');
-		//$(this).css('left', '0');
-		//$(this).css('top', '0');
 		$(this).draggable({ containment: "body", scroll: false });
 		$("#main img").mousedown(function () {
 			$(this).css('background', 'rgba(245, 245, 245, 0.3)');
@@ -91,13 +105,69 @@ $(document).ready(function() {
 		});
 	});
 		
-		
 	$('#screenshot').click(function() {
-		html2canvas($('#main'), {
-			onrendered: function(canvas) {
-				$('#screenshotTaken .modal-body').prepend(canvas);
-				$('#screenshotTaken').modal();
-			}
-		});
+		if (screenshot == true) {
+			html2canvas($('#main'), {
+				onrendered: function(canvas) {
+					$('#screenshotTaken .modal-body').prepend(canvas);
+					$('#screenshotTaken').modal();
+				}
+			});
+		} else {
+			$('#screenshot').popover({content: 'Feature not available with custom background', placement: 'bottom'});
+			$('#screenshot').popover('show');
+			tipNoScreenshot = true;
+		}
+	});
+
+	$('#addBackground').click(function() {
+		$('#addBackgroundModal').modal();
+	});
+
+	$('#addBackgroundModal').on('hidden.bs.modal', function () {
+		$('input[name="url"]').val('');
+		$('#addBackgroundAlert').css('display', 'none');
+    	$('#backgroundImg').attr('src', curBackgroundUrl);
+    	$('#background').val(curBackground);
+	});
+
+	$("#addBackgroundModal form").submit(function(event) {
+ 		event.preventDefault();
 	});
 });
+
+function submitNewBackground() {
+	var url = $('input[name="url"]').val();
+	loadImage(url, function() {
+		var imageWidth = this.width;
+		var imageHeight = this.height;
+		var aspectRatio = imageHeight/imageWidth;
+
+		if (imageHeight >= 700 && imageWidth >= 1500) {
+			if (aspectRatio > windowRatio) {
+				$('#addBackgroundAlert').css('display', 'block');
+				$('#addBackgroundAlert').html("The aspect ratio of your image is not suitable for your display. Try uploading a <b>wider</b> image.");
+			} else {
+				curBackground = 'custom';
+				curBackgroundUrl = url;
+				$('#addBackgroundModal').modal('hide');
+				$('#screenshot img').css('opacity', '0.2');
+				$('#screenshot').css('cursor', 'auto');
+				screenshot = false;
+			}
+		} else {
+			$('#addBackgroundAlert').css('display', 'block');
+			$('#addBackgroundAlert').html("Your image is too small. The minimum dimensions allowed are <b>700&times;1500</b> px.");
+		}
+	}, function() {
+		$('#addBackgroundAlert').css('display', 'block');
+		$('#addBackgroundAlert').html("The URL you provided is invalid.");
+	});
+};
+
+function loadImage(src, callback, error) {
+    var image = new Image();
+    image.onload = callback;
+    image.onerror = error;
+    image.src = src;
+}

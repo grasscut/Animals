@@ -28,7 +28,7 @@ body, html {
 	text-align: center;
 }
 
-#tipClose button {
+#tipClose button, #addBackgroundSubmit {
 	background-color: #333333;
 	color: #f5f5f5;
 	border-color: #f5f5f5;
@@ -38,6 +38,7 @@ body, html {
 	/*height: 100%;
 	width: 100%;*/
 	overflow: hidden !important;
+	position: relative;
 }
 
 #backgroundImg {
@@ -62,8 +63,6 @@ body, html {
 	width: 200px;
 	padding: 10px;
 	height: 70%;
-	/*min-height: 247px;*/
-	/*position: absolute;*/
 	position: fixed;
 	top: -70%;
 	right: 20px;
@@ -85,6 +84,34 @@ body, html {
 	-webkit-border-radius: 4px;
 	-moz-border-radius: 4px;
 	border-radius: 4px;
+}
+
+#addBackgroundModal .modal-dialog {
+	margin-top: 100px;
+}
+
+#addBackgroundModal .form-group {
+	width: 100%;
+}
+
+#addBackgroundSubmit {
+	width: 46px;
+	float: right;
+}
+
+#addBackgroundUrl {
+	width: 516px;
+	float: left;
+}
+
+#newBackgroundImg {
+	display: none;
+}
+
+#addBackgroundAlert {
+	display: none;
+	margin-top: 10px;
+	margin-bottom: 0 !important;
 }
 
 #animalsWrapper1 {
